@@ -492,7 +492,10 @@
 
   <div id="stopDetailContent" style="display:none">
     <div class="card" id="stopDetailCard">
-      <h2>정류장별 위반 상세</h2>
+      <div class="collapsible-header">
+        <h2>정류장별 위반 상세</h2>
+        <button id="stopDetailTotalsPrintBtn" class="secondary-btn no-print" type="button">총계 보고서 인쇄/PDF</button>
+      </div>
       <div class="date-list no-print" id="stopDetailRouteList"></div>
       <div class="field no-print" style="margin:12px 0 0; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <span id="stopDetailDispatchScheduleStatus" style="font-size:12px; color:var(--muted);"></span>
@@ -520,7 +523,6 @@
           <label for="stopDetailDelayThreshold">지연 기준(분, 이상)</label>
           <input type="number" id="stopDetailDelayThreshold" min="0" step="0.5" placeholder="예: 10" value="10">
         </div>
-        <button id="stopDetailTotalsPrintBtn" class="secondary-btn" type="button">총계 보고서 인쇄/PDF</button>
         <button id="stopDetailPrintBtn" class="secondary-btn" type="button">인쇄 / PDF로 저장</button>
       </div>
       <div class="field no-print" style="margin:0 0 12px;">
