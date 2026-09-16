@@ -62,6 +62,7 @@
     var pin = input.value.trim();
     var target = PIN_ROUTES[pin];
     if (target){
+      try{ localStorage.setItem('nsBusAuth', target.replace(/\/$/, '')); }catch(e){}
       window.location.href = target;
     } else {
       errMsg.textContent = 'PIN 번호가 올바르지 않습니다.';

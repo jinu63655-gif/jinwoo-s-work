@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<script>
+(function(){
+  try{
+    if(localStorage.getItem('nsBusAuth') !== 'full'){
+      window.location.replace('../');
+    }
+  }catch(e){ window.location.replace('../'); }
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DTG 업로드 누락 대시보드 · 남성버스 주간 위험운전행동 리포트 · 식권 정합성 체크 · 남성버스 · 차량 간격 &amp; 구간 소요 시간</title>
