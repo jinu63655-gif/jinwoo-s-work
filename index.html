@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>(주)남성버스 대시보드</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Malgun Gothic, sans-serif;
+    background: #0f1115;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card {
+    width: 100%; max-width: 360px; margin: 20px;
+    background: #171a22; border: 1px solid #262b3a; border-radius: 16px;
+    padding: 32px 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  }
+  h1 { color: #fff; font-size: 19px; margin: 0 0 6px; text-align: center; }
+  .sub { color: #9aa3b5; font-size: 13px; margin: 0 0 24px; text-align: center; }
+  input[type="password"] {
+    width: 100%; box-sizing: border-box; font-size: 22px; letter-spacing: 6px; text-align: center;
+    padding: 12px; border-radius: 10px; border: 1px solid #2a2f3f; background: #0f1115; color: #fff;
+    outline: none;
+  }
+  input[type="password"]:focus { border-color: #5b8def; }
+  button {
+    width: 100%; margin-top: 14px; padding: 12px; border: none; border-radius: 10px;
+    background: #5b8def; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  button:hover { background: #4a7cdc; }
+  .err {
+    color: #ef6a6a; font-size: 13px; text-align: center; margin-top: 12px; min-height: 16px;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>(주)남성버스 대시보드</h1>
+    <div class="sub">PIN 번호를 입력하세요</div>
+    <form id="pinForm" autocomplete="off">
+      <input type="password" id="pinInput" inputmode="numeric" maxlength="8" placeholder="••••" autofocus>
+      <button type="submit">확인</button>
+      <div class="err" id="errMsg"></div>
+    </form>
+  </div>
+
+<script>
+  // PIN별로 이동할 페이지. 여기 두 값만 바꾸면 PIN/이동 경로를 조정할 수 있습니다.
+  var PIN_ROUTES = {
+    '0000': 'full/',
+    '1234': 'interval/'
+  };
+
+  var form = document.getElementById('pinForm');
+  var input = document.getElementById('pinInput');
+  var errMsg = document.getElementById('errMsg');
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var pin = input.value.trim();
+    var target = PIN_ROUTES[pin];
+    if (target){
+      window.location.href = target;
+    } else {
+      errMsg.textContent = 'PIN 번호가 올바르지 않습니다.';
+      input.value = '';
+      input.focus();
+    }
+  });
+</script>
+</body>
+</html>
