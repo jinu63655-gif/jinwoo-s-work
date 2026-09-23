@@ -937,6 +937,35 @@ function saveDispatchScheduleOverride(){
   try{ localStorage.setItem(DISPATCH_SCHEDULE_OVERRIDE_KEY, JSON.stringify(DISPATCH_SCHEDULE)); } catch(e){ /* ignore */ }
 }
 
+/* 계획 배차표(.xlsx) 업로드 서버 저장 -- 지금까지는 이 브라우저(localStorage)에만 저장되어
+   다른 컴퓨터에서 열면 배차표를 다시 올려야 했다. bis_snapshots/ebus_driver_records와 같은
+   방식으로, 업로드된 노선의 배차표만(내장 기본값은 코드에 이미 있으니 제외) 노선별로 한 행씩
+   서버에 upsert하고, 페이지를 열 때 서버에 있는 모든 노선의 배차표를 불러와 DISPATCH_SCHEDULE에
+   병합해넣는다. */
+var dispatchDbConnected = null;
+function pushDispatchScheduleToServer(route, schedule){
+  return tab4SupaFetch('/dispatch_schedule_overrides?on_conflict=route', {
+    method: 'POST',
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify([{ route: route, schedule: schedule, updated_at: Date.now() }])
+  }).then(function(){
+    dispatchDbConnected = true;
+  }).catch(function(){
+    dispatchDbConnected = false;
+  });
+}
+function hydrateDispatchScheduleFromServer(){
+  return tab4SupaFetch('/dispatch_schedule_overrides?select=route,schedule').then(function(rows){
+    dispatchDbConnected = true;
+    if(rows && rows.length){
+      rows.forEach(function(r){ DISPATCH_SCHEDULE[r.route] = r.schedule; });
+      saveDispatchScheduleOverride();
+    }
+  }).catch(function(){
+    dispatchDbConnected = false;
+  });
+}
+
 /* ================= 계획 배차표(.xlsx) 업로드 파싱 =================
    "노선번호 : NNN" 이 적힌 시트 1개 = 노선 1개. 4행(0-idx)이 "OO대" 대수 서브헤더, 5행부터 데이터.
    같은 대수(예: "25대")의 배차시각은 "1 회, 2 회, ..." 열그룹으로 나뉘어 좌→우로 이어진다.
@@ -1078,7 +1107,11 @@ function updateDispatchScheduleStatus(){
   var el = document.getElementById('dispatchScheduleStatus');
   if(!el) return;
   var routes = Object.keys(DISPATCH_SCHEDULE).sort();
-  el.textContent = routes.length ? ('현재 저장된 배차표: '+routes.join(', ')+' ('+routes.length+'개 노선)') : '저장된 배차표가 없습니다.';
+  var base = routes.length ? ('현재 저장된 배차표: '+routes.join(', ')+' ('+routes.length+'개 노선)') : '저장된 배차표가 없습니다.';
+  var syncNote = dispatchDbConnected === true ? ' · 서버에 저장됨(다른 컴퓨터에서도 보임)'
+    : dispatchDbConnected === false ? ' · ⚠️ 서버 저장 안 됨(이 브라우저에만 유지)'
+    : '';
+  el.textContent = base + syncNote;
 }
 
 function handleDispatchScheduleFile(file){
@@ -1105,6 +1138,13 @@ function handleDispatchScheduleFile(file){
 
     if(intervalData.route){ autoApplyIntervalFleetTypeForDate(); renderIntervalMatrix(); }
     if(stopDetailData.route) renderStopDetailFleetTypeButtons();
+
+    Promise.all(result.routes.map(function(route){
+      return pushDispatchScheduleToServer(route, result.schedules[route]);
+    })).then(function(){
+      updateDispatchScheduleStatus();
+      updateStopDetailDispatchScheduleStatus();
+    });
 
     alert(result.routes.join(', ')+' 노선의 배차표를 불러왔습니다. (총 '+result.routes.length+'개 노선)');
   };
@@ -4761,7 +4801,11 @@ document.addEventListener('DOMContentLoaded', function(){
   // 앱을 켤 때 서버(다른 기기·다른 사람이 올린 데이터)를 먼저 이 브라우저로 받아와 채운 뒤,
   // 그 결과가 반영된 IndexedDB를 기준으로 마지막 세션을 복원한다. 서버 연결이 안 되거나
   // 테이블이 아직 없어도 hydrate 함수들이 조용히 실패 처리하므로 여기서는 그냥 이어서 진행한다.
-  Promise.all([hydrateSnapshotsFromServer(), hydrateDriverRecordsFromServer()]).then(function(){
+  Promise.all([hydrateSnapshotsFromServer(), hydrateDriverRecordsFromServer(), hydrateDispatchScheduleFromServer()]).then(function(){
+    updateDispatchScheduleStatus();
+    updateStopDetailDispatchScheduleStatus();
+    if(intervalData.route){ autoApplyIntervalFleetTypeForDate(); renderIntervalMatrix(); }
+    if(stopDetailData.route) renderStopDetailFleetTypeButtons();
     restoreLastSession();
   }).catch(function(){
     restoreLastSession();
